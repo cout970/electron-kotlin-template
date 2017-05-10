@@ -82,9 +82,10 @@ task runElectron(type: Exec) {
             break
         case OperatingSystem.MAC_OS:
         case OperatingSystem.LINUX:
-            commandLine './build/node_modules/electron/dist/electron', 'run'
+            commandLine 'node_modules/electron/dist/electron', 'run'
             break
     }
+    print commandLine
 }
 
 task buildAndRun(dependsOn: build) {
