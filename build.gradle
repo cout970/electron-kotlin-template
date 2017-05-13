@@ -3,77 +3,6 @@ version '1.0-SNAPSHOT'
 
 import org.gradle.internal.os.OperatingSystem
 
-buildscript {
-    ext.kotlin_version = '1.1.0'
-    ext.html_version = "0.6.2"
-
-    repositories {
-        jcenter()
-        mavenCentral()
-        maven { url "http://dl.bintray.com/kotlin/kotlin-eap" }
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.jetbrains.kotlin:kotlin-frontend-plugin:0.0.19"
-    }
-}
-
-apply plugin: 'kotlin2js'
-apply plugin: 'org.jetbrains.kotlin.frontend'
-
-repositories {
-    jcenter()
-    mavenCentral()
-}
-
-dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
-    compile "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
-    compile "org.jetbrains.kotlinx:kotlinx-html-js:$html_version"
-}
-
-kotlinFrontend {
-    sourceMaps = false
-
-    npm {
-        replaceVersion("kotlin-js-library", kotlin_version)
-        replaceVersion("kotlinx-html-js", kotlin_version) // optional
-        replaceVersion("kotlinx-html-shared", kotlin_version)
-
-        dependency("electron")
-        dependency("datauri") // used to load pages from strings (optional)
-        dependency("react") // (optional)
-        dependency("react-dom")// (optional)
-        dependency("react-router")// (optional)
-        dependency("jquery")// (optional)
-        dependency("react-markdown")// (optional)
-    }
-}
-
-compileKotlin2Js {
-    kotlinOptions.metaInfo = true
-    kotlinOptions.outputFile = "$project.buildDir.path/run/${project.name}.js"
-    kotlinOptions.sourceMap = true
-    kotlinOptions.moduleKind = 'commonjs'
-    kotlinOptions.main = "call"
-}
-
-sourceSets {
-    main.kotlin.srcDirs += "src/main/kotlin"
-    main.kotlin.srcDirs += "src/bindings/kotlin"
-    main.resources.srcDirs += "src/main/resources"
-
-    main.output.resourcesDir = "build/run"
-
-    test.kotlin.srcDirs += "src/test/kotlin"
-    test.resources.srcDirs += "src/test/resources"
-}
-
-task copyResources(type: Copy) {
-    from sourceSets.main.resources.srcDirs
-    into file(buildDir.path + "/run")
-}
-
 task runElectron(type: Exec) {
     workingDir './build'
     switch (OperatingSystem.current()) {
@@ -87,8 +16,12 @@ task runElectron(type: Exec) {
     }
 }
 
-task buildAndRun(dependsOn: build) {
-    doLast {
-        tasks.runElectron.execute()
-    }
+task buildAndRun(){
+    dependsOn ':backend:build'
+    dependsOn ':frontend:build'
+    dependsOn ':runElectron'
+}
+
+task recompileFrontend(){
+    dependsOn ':frontend:build'
 }
